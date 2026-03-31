@@ -1,0 +1,18 @@
+{
+  "name": "poc-ws-channel",
+  "version": "1.0.0",
+  "description": "MCP Channel Server for poc-webhook-ws-proxy — bridges Claude Code ↔ CF Worker",
+  "type": "module",
+  "scripts": {
+    "start": "bun channel.ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.5.0"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "poc-ws-channel": {
+      "command": "bun",
+      "args": ["./channel/channel.ts"],
+      "env": {
+        "PROXY_WS_URL":      "ws://localhost:8787/ws",
+        "PROXY_WEBHOOK_URL": "http://localhost:8787/webhook",
+        "PROXY_ROOM":        "default"
+      }
+    }
+  }
+}

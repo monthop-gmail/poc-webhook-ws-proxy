@@ -23,6 +23,7 @@
 | `GET` | `/ws` | WebSocket upgrade endpoint |
 | `POST` | `/webhook` | Receive a webhook and broadcast to connected clients |
 | `GET` | `/dashboard` | Live dashboard (auto-refreshes every 10 s) |
+| `GET` | `/chat` | Fakechat-style browser chat UI (two-way with Claude) |
 
 All endpoints accept an optional `?room=<name>` query parameter (default: `default`).
 
@@ -125,19 +126,92 @@ curl -X POST https://your-worker.workers.dev/webhook?room=orders \
   -d '{"event": "order.created", "orderId": 42}'
 ```
 
+## MCP Channel Server (Claude Code integration)
+
+The `channel/` directory contains an MCP Channel Server that bridges your running
+Claude Code session with the CF Worker proxy — inspired by Claude Code's `fakechat` demo.
+
+```
+[Browser /chat UI]
+      ↕ WebSocket
+[CF Worker / Durable Object]         ← POST /webhook from any external service
+      ↕ WebSocket
+[MCP Channel Server (local)]
+      ↕ stdio (MCP protocol)
+[Claude Code session]
+```
+
+### Setup
+
+**Requirements:** [Bun](https://bun.sh) + Claude Code ≥ v2.1.80 with claude.ai login
+
+```bash
+cd channel
+bun install
+```
+
+Copy `.mcp.json.example` to `.mcp.json` in the project root and adjust URLs:
+
+```bash
+cp .mcp.json.example .mcp.json
+```
+
+Start the CF Worker locally, then launch Claude Code with the channel:
+
+```bash
+# Terminal 1
+npm run dev                  # CF Worker at localhost:8787
+
+# Terminal 2 — Claude Code with channel enabled
+claude --dangerously-load-development-channels server:poc-ws-channel
+```
+
+Open the chat UI: `http://localhost:8787/chat`
+
+Type a message → the MCP server forwards it to Claude Code → Claude replies back
+in the chat UI via the `reply` tool.
+
+### Environment Variables (channel server)
+
+| Variable | Default | Description |
+|---|---|---|
+| `PROXY_WS_URL` | `ws://localhost:8787/ws` | WebSocket endpoint of the CF Worker |
+| `PROXY_WEBHOOK_URL` | `http://localhost:8787/webhook` | Webhook POST endpoint |
+| `PROXY_ROOM` | `default` | Room/channel name |
+
+### Permission Relay
+
+When Claude needs to run a tool (Bash, Write, etc.) while you're away from the terminal,
+the permission prompt is forwarded to the chat UI. Click **Allow** or **Deny** to respond
+remotely — Claude Code applies the first answer and closes the dialog.
+
+### MCP Protocol Summary
+
+| Direction | Mechanism | What it carries |
+|---|---|---|
+| External → Claude | `notifications/claude/channel` | Webhook payload or chat message |
+| Claude → External | `reply` tool call | Claude's response text |
+| Claude Code → Channel | `notifications/claude/channel/permission_request` | Tool approval prompt |
+| External → Claude Code | `notifications/claude/channel/permission` | `allow` / `deny` verdict |
+
 ## Project Structure
 
 ```
-cf-webhook-ws-proxy/
+poc-webhook-ws-proxy/
 ├── proxy/
 │   ├── index.ts            Worker entry point — routing + env
-│   └── durable-object.ts   WebSocket state manager
+│   └── durable-object.ts   WebSocket state + webhook broadcaster + chat UI
+├── channel/
+│   ├── channel.ts          MCP Channel Server (Claude Code ↔ CF Worker bridge)
+│   ├── package.json        Bun deps (MCP SDK, zod)
+│   └── tsconfig.json
 ├── client/
-│   ├── client.py           Python example client
+│   ├── client.py           Python WebSocket client example
 │   └── requirements.txt
 ├── wrangler.toml
 ├── package.json
 ├── tsconfig.json
+├── .mcp.json.example       Claude Code MCP config template
 ├── .dev.vars.example
 └── .gitignore
 ```
