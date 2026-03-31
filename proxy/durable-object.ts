@@ -37,11 +37,8 @@ const CORS_HEADERS = {
  */
 export class WebSocketProxy implements DurableObject {
   private readonly state: DurableObjectState;
-  private readonly env: Env;
-
-  constructor(state: DurableObjectState, env: Env) {
+  constructor(state: DurableObjectState, _env: Env) {
     this.state = state;
-    this.env = env;
   }
 
   // ─── Routing ────────────────────────────────────────────────────────────────

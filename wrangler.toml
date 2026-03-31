@@ -18,5 +18,5 @@ command = "npm run build"
 
 # ─── Dev ─────────────────────────────────────────────────────────────────────
 [dev]
-port            = 8787
+port            = 8788
 local_protocol  = "http"
