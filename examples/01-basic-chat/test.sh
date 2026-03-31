@@ -4,13 +4,12 @@
 # ส่ง message ธรรมดาเข้า proxy แล้วให้ Claude ตอบผ่าน /chat UI
 #
 # Prerequisites:
-#   1. npm run dev   (CF Worker at localhost:8787)
-#   2. claude --dangerously-load-development-channels server:poc-ws-channel
-#   3. เปิด http://localhost:8787/chat ใน browser
+#   1. bash examples/06-multi-agent/start-agents.sh start
+#   2. เปิด https://cf-webhook-ws-proxy.monthop-gmail.workers.dev/chat ใน browser
 
 set -euo pipefail
 
-BASE_URL="${BASE_URL:-http://localhost:8787}"
+BASE_URL="${BASE_URL:-https://cf-webhook-ws-proxy.monthop-gmail.workers.dev}"
 ROOM="${ROOM:-default}"
 
 echo "📨 Sending chat message to room: $ROOM"
@@ -22,4 +21,4 @@ curl -s -X POST "$BASE_URL/webhook?room=$ROOM" \
   | jq .
 
 echo ""
-echo "✅ Message sent — check http://localhost:8787/chat?room=$ROOM for Claude's reply"
+echo "✅ Message sent — check https://cf-webhook-ws-proxy.monthop-gmail.workers.dev/chat?room=$ROOM for Claude's reply"

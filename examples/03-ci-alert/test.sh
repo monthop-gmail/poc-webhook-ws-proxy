@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-BASE_URL="${BASE_URL:-http://localhost:8787}"
+BASE_URL="${BASE_URL:-https://cf-webhook-ws-proxy.monthop-gmail.workers.dev}"
 ROOM="${ROOM:-ci}"
 SCENARIO="${1:-build-fail}"   # build-fail | test-fail | deploy-success
 

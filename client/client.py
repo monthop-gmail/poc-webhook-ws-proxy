@@ -5,8 +5,8 @@ Connects to the proxy and prints every incoming webhook event.
 
 Usage:
     pip install websockets
-    python client.py --url wss://your-worker.workers.dev/ws
-    python client.py --url ws://localhost:8787/ws --room my-room
+    python client.py
+    python client.py --url wss://cf-webhook-ws-proxy.monthop-gmail.workers.dev/ws --room ci
 """
 from __future__ import annotations
 
@@ -120,8 +120,8 @@ def main() -> None:
     )
     parser.add_argument(
         "--url",
-        default="ws://localhost:8787/ws",
-        help="WebSocket endpoint (default: ws://localhost:8787/ws)",
+        default="wss://cf-webhook-ws-proxy.monthop-gmail.workers.dev/ws",
+        help="WebSocket endpoint (default: wss://cf-webhook-ws-proxy.monthop-gmail.workers.dev/ws)",
     )
     parser.add_argument(
         "--room",

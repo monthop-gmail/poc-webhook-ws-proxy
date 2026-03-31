@@ -5,15 +5,14 @@
 ## เตรียม environment ก่อนรัน
 
 ```bash
-# Terminal 1 — CF Worker (local dev)
-npm run dev
+# Terminal — Start all background agents
+bash examples/06-multi-agent/start-agents.sh start
 
-# Terminal 2 — Claude Code with MCP Channel
-cp .mcp.json.example .mcp.json
-claude --dangerously-load-development-channels server:poc-ws-channel
-
-# Browser — Chat UI
-open http://localhost:8787/chat
+# Browser — Chat UIs
+# https://cf-webhook-ws-proxy.monthop-gmail.workers.dev/chat?room=default
+# https://cf-webhook-ws-proxy.monthop-gmail.workers.dev/chat?room=ci
+# https://cf-webhook-ws-proxy.monthop-gmail.workers.dev/chat?room=chat
+# https://cf-webhook-ws-proxy.monthop-gmail.workers.dev/chat?room=line
 ```
 
 ---

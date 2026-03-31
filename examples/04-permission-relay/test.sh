@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-BASE_URL="${BASE_URL:-http://localhost:8788}"
+BASE_URL="${BASE_URL:-https://cf-webhook-ws-proxy.monthop-gmail.workers.dev}"
 ROOM="${ROOM:-default}"
 
 echo "🔐 Sending a message that will trigger a permission prompt"
@@ -27,7 +27,7 @@ curl -s -X POST "$BASE_URL/webhook?room=$ROOM" \
 
 echo ""
 echo "✅ Message sent"
-echo "   → เปิด http://localhost:8788/chat?room=$ROOM"
+echo "   → เปิด https://cf-webhook-ws-proxy.monthop-gmail.workers.dev/chat?room=$ROOM"
 echo "   → รอ permission request popup ใน browser"
 echo "   → กด Allow เพื่ออนุญาตให้ Claude รัน command"
 echo ""

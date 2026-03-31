@@ -9,7 +9,7 @@
 
 set -euo pipefail
 
-BASE_URL="${BASE_URL:-http://localhost:8787}"
+BASE_URL="${BASE_URL:-https://cf-webhook-ws-proxy.monthop-gmail.workers.dev}"
 ROOM="${ROOM:-line}"
 
 # สร้าง LINE-like payload
@@ -47,6 +47,6 @@ curl -s -X POST "$BASE_URL/webhook?room=$ROOM" \
   | jq .
 
 echo ""
-echo "✅ Done — open http://localhost:8787/chat?room=$ROOM to see Claude's reply"
+echo "✅ Done — open https://cf-webhook-ws-proxy.monthop-gmail.workers.dev/chat?room=$ROOM to see Claude's reply"
 echo ""
 echo "💡 Claude จะเห็น events[0].message.text และตอบกลับผ่าน reply tool"
