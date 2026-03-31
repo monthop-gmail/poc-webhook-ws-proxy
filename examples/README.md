@@ -98,3 +98,32 @@ sudo journalctl -fu claude-agent
 cp examples/05-background/CLAUDE.md.example CLAUDE.md
 # แก้ตาม context ของ project จริง
 ```
+
+---
+
+## 06 · Multi-Agent Background
+
+รัน Claude หลาย agent พร้อมกัน แต่ละตัว listen คนละ room และมี role ต่างกัน
+
+| Session | Room | Role |
+|---------|------|------|
+| `agent-ci` | `ci` | วิเคราะห์ CI/CD alerts |
+| `agent-chat` | `chat` | ตอบ chat ทั่วไป |
+| `agent-line` | `line` | ตอบ LINE webhook |
+
+```bash
+# Start ทั้งหมด
+bash examples/06-multi-agent/start-agents.sh start
+
+# ดู status
+bash examples/06-multi-agent/start-agents.sh status
+
+# ส่ง test events ไปทุก room พร้อมกัน
+bash examples/06-multi-agent/test.sh
+
+# ดู log agent ใด agent หนึ่ง
+bash examples/06-multi-agent/start-agents.sh logs ci
+
+# Stop ทั้งหมด
+bash examples/06-multi-agent/start-agents.sh stop
+```

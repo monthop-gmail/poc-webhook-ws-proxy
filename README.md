@@ -290,6 +290,7 @@ cp examples/05-background/CLAUDE.md.example CLAUDE.md
 | [03-ci-alert](./examples/03-ci-alert/) | GitHub Actions build/test/deploy |
 | [04-permission-relay](./examples/04-permission-relay/) | Approve tool จาก browser |
 | [05-background](./examples/05-background/) | Always-on agent (tmux/systemd) |
+| [06-multi-agent](./examples/06-multi-agent/) | หลาย agent พร้อมกัน คนละ room/role |
 
 ---
 
