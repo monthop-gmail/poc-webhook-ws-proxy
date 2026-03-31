@@ -1,0 +1,18 @@
+{
+  "name": "cf-webhook-ws-proxy",
+  "version": "1.0.0",
+  "description": "Cloudflare Workers proxy that receives HTTP webhooks and broadcasts to connected WebSocket clients",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "tsc --noEmit",
+    "deploy": "wrangler deploy",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241106.0",
+    "typescript": "^5.5.0",
+    "wrangler": "^3.80.0"
+  }
+}

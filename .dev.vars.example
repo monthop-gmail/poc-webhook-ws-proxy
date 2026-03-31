@@ -1,0 +1,6 @@
+# Copy to .dev.vars for local development with `wrangler dev`
+# DO NOT commit .dev.vars — it is in .gitignore
+
+# LINE Messaging API (optional — for LINE webhook integrations)
+LINE_CHANNEL_SECRET=your_line_channel_secret_here
+LINE_CHANNEL_TOKEN=your_line_channel_token_here

@@ -1,0 +1,22 @@
+name = "cf-webhook-ws-proxy"
+main = "proxy/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# ─── Durable Objects ──────────────────────────────────────────────────────────
+[[durable_objects.bindings]]
+name       = "WEBSOCKET_PROXY"
+class_name = "WebSocketProxy"
+
+[[migrations]]
+tag                 = "v1"
+new_classes         = ["WebSocketProxy"]
+
+# ─── Build ────────────────────────────────────────────────────────────────────
+[build]
+command = "npm run build"
+
+# ─── Dev ─────────────────────────────────────────────────────────────────────
+[dev]
+port            = 8787
+local_protocol  = "http"
