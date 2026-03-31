@@ -1,227 +1,242 @@
-# cf-webhook-ws-proxy
+# poc-webhook-ws-proxy
 
-> Open-source Cloudflare Workers proxy that receives HTTP webhooks and broadcasts them to connected WebSocket clients in real-time.
+> Cloudflare Workers proxy รับ HTTP webhook แล้ว broadcast real-time ไปยัง WebSocket clients
+> พร้อม MCP Channel Server ให้ Claude Code ตอบสนองต่อ events ได้โดยตรง
 
 ```
-[External Service] → POST /webhook → [CF Worker] → [Durable Object] → [WebSocket Clients]
+[External Service]
+      │ POST /webhook
+      ▼
+[CF Worker + Durable Object]  ──broadcast──►  [WebSocket Clients]
+      │                                              │
+      │ WebSocket                           [Browser /chat UI]
+      ▼
+[MCP Channel Server]
+      │ stdio (MCP protocol)
+      ▼
+[Claude Code Session]  ──reply tool──►  [CF Worker]  ──►  [Chat UI]
 ```
 
-## Features
+## Quick Start (5 นาที)
 
-- **Zero-infra relay** — runs entirely on Cloudflare's edge, no servers to manage
-- **WebSocket Hibernation** — Durable Object sleeps between events, billed only for active CPU time
-- **Room/channel system** — append `?room=<name>` to scope connections and webhooks
-- **Multiple concurrent clients** — broadcast to all connected clients in a room simultaneously
-- **Simple dashboard** — visit `/dashboard` to see connected clients and rooms
-- **CORS-ready** — webhook endpoint accepts cross-origin POST requests
-
-## API Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/health` | Health check — returns `{ status: "ok" }` |
-| `GET` | `/ws` | WebSocket upgrade endpoint |
-| `POST` | `/webhook` | Receive a webhook and broadcast to connected clients |
-| `GET` | `/dashboard` | Live dashboard (auto-refreshes every 10 s) |
-| `GET` | `/chat` | Fakechat-style browser chat UI (two-way with Claude) |
-
-All endpoints accept an optional `?room=<name>` query parameter (default: `default`).
-
-## WebSocket Protocol
-
-### Server → Client
-
-**On connect:**
-```json
-{ "type": "connected", "clientId": "uuid", "room": "default", "timestamp": "..." }
-```
-
-**On webhook received:**
-```json
-{ "type": "webhook", "body": { ... }, "timestamp": "...", "source": "...", "room": "default" }
-```
-
-**Pong (reply to ping):**
-```json
-{ "type": "pong", "timestamp": "..." }
-```
-
-### Client → Server
-
-**Ping:**
-```json
-{ "type": "ping" }
-```
-
-**Reply (arbitrary data):**
-```json
-{ "type": "reply", "data": { ... } }
-```
-
-## Quick Start
-
-### 1. Install dependencies
+### 1. Clone & install
 
 ```bash
+git clone https://github.com/monthop-gmail/poc-webhook-ws-proxy
+cd poc-webhook-ws-proxy
 npm install
 ```
 
-### 2. Local development
+### 2. รัน CF Worker local
 
 ```bash
-cp .dev.vars.example .dev.vars   # fill in secrets if needed
-npm run dev                       # starts at http://localhost:8787
+npm run dev
+# Worker พร้อมที่ http://localhost:8787
 ```
 
-### 3. Deploy to Cloudflare
+### 3. ทดสอบ webhook (ไม่ต้องใช้ Claude)
 
 ```bash
-# Login (one-time)
-npx wrangler login
+# Terminal 2 — Python client รับ events
+pip install websockets
+python client/client.py
 
-# Deploy
-npm run deploy
-```
-
-### 4. (Optional) Add LINE secrets
-
-```bash
-npx wrangler secret put LINE_CHANNEL_SECRET
-npx wrangler secret put LINE_CHANNEL_TOKEN
-```
-
-## Python Client
-
-```bash
-pip install -r client/requirements.txt
-python client/client.py --url wss://your-worker.workers.dev/ws --room my-room
-```
-
-### Options
-
-```
---url             WebSocket endpoint   (default: ws://localhost:8787/ws)
---room            Room name            (default: default)
---ping-interval   Heartbeat in seconds (default: 30)
-```
-
-The client auto-reconnects with exponential back-off (2 s → 4 s → … → 60 s max).
-
-## Send a Test Webhook
-
-```bash
-# Local
+# Terminal 3 — ส่ง webhook
 curl -X POST http://localhost:8787/webhook \
   -H "Content-Type: application/json" \
-  -d '{"event": "test", "message": "hello from curl"}'
-
-# Production (default room)
-curl -X POST https://your-worker.workers.dev/webhook \
-  -H "Content-Type: application/json" \
-  -d '{"event": "order.created", "orderId": 42}'
-
-# Specific room
-curl -X POST https://your-worker.workers.dev/webhook?room=orders \
-  -H "Content-Type: application/json" \
-  -d '{"event": "order.created", "orderId": 42}'
+  -d '{"event": "test", "message": "hello!"}'
 ```
 
-## MCP Channel Server (Claude Code integration)
+เปิด dashboard: http://localhost:8787/dashboard
 
-The `channel/` directory contains an MCP Channel Server that bridges your running
-Claude Code session with the CF Worker proxy — inspired by Claude Code's `fakechat` demo.
+---
 
-```
-[Browser /chat UI]
-      ↕ WebSocket
-[CF Worker / Durable Object]         ← POST /webhook from any external service
-      ↕ WebSocket
-[MCP Channel Server (local)]
-      ↕ stdio (MCP protocol)
-[Claude Code session]
-```
+## Setup MCP Channel (Claude Code integration)
 
-### Setup
+> ให้ Claude Code ตอบสนองต่อ webhook events และ chat messages แบบ real-time
 
-**Requirements:** [Bun](https://bun.sh) + Claude Code ≥ v2.1.80 with claude.ai login
+### Requirements
+- [Bun](https://bun.sh) — `bun --version`
+- Claude Code ≥ v2.1.80 (`claude --version`)
+- login ด้วย claude.ai account
+
+### 1. Install channel dependencies
 
 ```bash
-cd channel
-bun install
+cd channel && bun install && cd ..
 ```
 
-Copy `.mcp.json.example` to `.mcp.json` in the project root and adjust URLs:
+### 2. สร้าง MCP config
 
 ```bash
 cp .mcp.json.example .mcp.json
 ```
 
-Start the CF Worker locally, then launch Claude Code with the channel:
+`.mcp.json` (แก้ URL ถ้า deploy ขึ้น Cloudflare แล้ว):
+```json
+{
+  "mcpServers": {
+    "poc-ws-channel": {
+      "command": "bun",
+      "args": ["./channel/channel.ts"],
+      "env": {
+        "PROXY_WS_URL":      "ws://localhost:8787/ws",
+        "PROXY_WEBHOOK_URL": "http://localhost:8787/webhook",
+        "PROXY_ROOM":        "default"
+      }
+    }
+  }
+}
+```
+
+### 3. Start Claude Code with channel
 
 ```bash
-# Terminal 1
-npm run dev                  # CF Worker at localhost:8787
-
-# Terminal 2 — Claude Code with channel enabled
 claude --dangerously-load-development-channels server:poc-ws-channel
 ```
 
-Open the chat UI: `http://localhost:8787/chat`
+### 4. เปิด Chat UI
 
-Type a message → the MCP server forwards it to Claude Code → Claude replies back
-in the chat UI via the `reply` tool.
+```
+http://localhost:8787/chat
+```
 
-### Environment Variables (channel server)
+พิมพ์ข้อความ → Claude ตอบกลับใน browser ✨
 
-| Variable | Default | Description |
-|---|---|---|
-| `PROXY_WS_URL` | `ws://localhost:8787/ws` | WebSocket endpoint of the CF Worker |
-| `PROXY_WEBHOOK_URL` | `http://localhost:8787/webhook` | Webhook POST endpoint |
-| `PROXY_ROOM` | `default` | Room/channel name |
+---
 
-### Permission Relay
+## API Endpoints
 
-When Claude needs to run a tool (Bash, Write, etc.) while you're away from the terminal,
-the permission prompt is forwarded to the chat UI. Click **Allow** or **Deny** to respond
-remotely — Claude Code applies the first answer and closes the dialog.
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/health` | Health check |
+| `GET` | `/ws` | WebSocket connection |
+| `POST` | `/webhook` | รับ webhook → broadcast ทุก client |
+| `GET` | `/chat` | Chat UI (fakechat-style) |
+| `GET` | `/dashboard` | Live dashboard |
 
-### MCP Protocol Summary
+ทุก endpoint รองรับ `?room=<name>` (default: `default`)
 
-| Direction | Mechanism | What it carries |
-|---|---|---|
-| External → Claude | `notifications/claude/channel` | Webhook payload or chat message |
-| Claude → External | `reply` tool call | Claude's response text |
-| Claude Code → Channel | `notifications/claude/channel/permission_request` | Tool approval prompt |
-| External → Claude Code | `notifications/claude/channel/permission` | `allow` / `deny` verdict |
+---
+
+## WebSocket Protocol
+
+### Server → Client
+
+```jsonc
+// เมื่อ connect
+{ "type": "connected", "clientId": "uuid", "room": "default" }
+
+// เมื่อมี webhook
+{ "type": "webhook", "body": { ... }, "timestamp": "...", "source": "..." }
+```
+
+### Client → Server
+
+```jsonc
+{ "type": "ping" }
+{ "type": "reply", "data": { ... } }
+```
+
+---
+
+## MCP Channel Protocol
+
+```
+External event  ──POST /webhook──►  CF Worker  ──WebSocket──►  MCP Server
+                                                                    │ notifications/claude/channel
+                                                              Claude Code
+                                                                    │ reply tool call
+External UI     ◄──WebSocket──  CF Worker  ◄──POST /webhook──  MCP Server
+```
+
+| Flow | Method |
+|------|--------|
+| Event เข้า Claude | `notifications/claude/channel` |
+| Claude ตอบกลับ | `reply` tool → POST /webhook |
+| Permission request | `notifications/claude/channel/permission_request` |
+| Approve/Deny | `notifications/claude/channel/permission` |
+
+---
+
+## Deploy to Cloudflare
+
+```bash
+# Login (ครั้งแรก)
+npx wrangler login
+
+# Deploy
+npm run deploy
+
+# อัพเดต .mcp.json ให้ชี้ไป production URL
+```
+
+---
+
+## Background Agent (Always-on)
+
+รัน Claude เป็น agent ที่ตอบสนองตลอดเวลา:
+
+```bash
+# tmux (development)
+bash examples/05-background/start-tmux.sh start
+
+# systemd (production)
+sudo cp examples/05-background/claude-agent.service /etc/systemd/system/
+sudo systemctl enable --now claude-agent
+```
+
+บอก Claude ว่าต้องทำอะไร:
+```bash
+cp examples/05-background/CLAUDE.md.example CLAUDE.md
+# แก้ให้ตรงกับ project จริง
+```
+
+---
+
+## Examples
+
+ดู [`examples/`](./examples/README.md) สำหรับ demo แต่ละ scenario:
+
+| Example | Description |
+|---------|-------------|
+| [01-basic-chat](./examples/01-basic-chat/) | ส่ง message ธรรมดา |
+| [02-line-webhook](./examples/02-line-webhook/) | จำลอง LINE Messaging API |
+| [03-ci-alert](./examples/03-ci-alert/) | GitHub Actions build/test/deploy |
+| [04-permission-relay](./examples/04-permission-relay/) | Approve tool จาก browser |
+| [05-background](./examples/05-background/) | Always-on agent (tmux/systemd) |
+
+---
 
 ## Project Structure
 
 ```
 poc-webhook-ws-proxy/
 ├── proxy/
-│   ├── index.ts            Worker entry point — routing + env
-│   └── durable-object.ts   WebSocket state + webhook broadcaster + chat UI
+│   ├── index.ts               Worker entry point
+│   └── durable-object.ts      WebSocket state + webhook broadcast + chat UI
 ├── channel/
-│   ├── channel.ts          MCP Channel Server (Claude Code ↔ CF Worker bridge)
-│   ├── package.json        Bun deps (MCP SDK, zod)
+│   ├── channel.ts             MCP Channel Server
+│   ├── package.json
 │   └── tsconfig.json
 ├── client/
-│   ├── client.py           Python WebSocket client example
+│   ├── client.py              Python WebSocket client
 │   └── requirements.txt
+├── examples/
+│   ├── 01-basic-chat/
+│   ├── 02-line-webhook/
+│   ├── 03-ci-alert/
+│   ├── 04-permission-relay/
+│   └── 05-background/         tmux script + systemd service + CLAUDE.md template
 ├── wrangler.toml
 ├── package.json
 ├── tsconfig.json
-├── .mcp.json.example       Claude Code MCP config template
-├── .dev.vars.example
-└── .gitignore
+├── .mcp.json.example
+└── .dev.vars.example
 ```
 
-## Architecture Notes
-
-- **Durable Objects** provide single-threaded, consistent state per room — no race conditions when broadcasting.
-- **WebSocket Hibernation API** (`state.acceptWebSocket`) lets the runtime hibernate the DO between events. Client IDs are stored as WebSocket _tags_ so they survive hibernation without an in-memory Map.
-- **Room isolation** — each room name maps to a distinct Durable Object instance, so broadcasts never leak across rooms.
+---
 
 ## License
 
-MIT © 2024 — see [LICENSE](LICENSE).
+MIT

@@ -1,0 +1,43 @@
+# systemd service สำหรับ always-on Claude Code Agent
+#
+# Install:
+#   sudo cp claude-agent.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now claude-agent
+#
+# Logs:
+#   sudo journalctl -fu claude-agent
+
+[Unit]
+Description=Claude Code Channel Agent (poc-webhook-ws-proxy)
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=admin
+WorkingDirectory=/home/admin/webhook-ws-proxy
+
+# ── Proxy connection ──────────────────────────────────────────────────────────
+# เปลี่ยนเป็น URL จริงหลัง deploy ขึ้น Cloudflare
+Environment=PROXY_WS_URL=wss://your-worker.workers.dev/ws
+Environment=PROXY_WEBHOOK_URL=https://your-worker.workers.dev/webhook
+Environment=PROXY_ROOM=default
+
+# ── Claude Code ───────────────────────────────────────────────────────────────
+ExecStart=claude \
+  --dangerously-load-development-channels server:poc-ws-channel \
+  --dangerously-skip-permissions
+
+# ── Restart policy ────────────────────────────────────────────────────────────
+Restart=on-failure
+RestartSec=10
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=claude-agent
+
+[Install]
+WantedBy=multi-user.target
