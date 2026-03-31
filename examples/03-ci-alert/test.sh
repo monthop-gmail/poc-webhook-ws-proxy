@@ -94,4 +94,4 @@ curl -s -X POST "$BASE_URL/webhook?room=$ROOM" \
 
 echo ""
 echo "✅ Alert sent to room: $ROOM"
-echo "   → http://localhost:8787/chat?room=$ROOM"
+echo "   → http://localhost:8788/chat?room=$ROOM"

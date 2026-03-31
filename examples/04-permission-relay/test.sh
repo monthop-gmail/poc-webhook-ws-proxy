@@ -9,11 +9,11 @@
 #   3. MCP server forward prompt ไปที่ /chat
 #   4. กด Allow/Deny ใน browser แทนการพิมพ์ใน terminal
 #
-# NOTE: ต้องมี claude --dangerously-load-development-channels รันอยู่
+# NOTE: ต้องมี claude --mcp-config .mcp.json --dangerously-load-development-channels server:poc-ws-channel รันอยู่
 
 set -euo pipefail
 
-BASE_URL="${BASE_URL:-http://localhost:8787}"
+BASE_URL="${BASE_URL:-http://localhost:8788}"
 ROOM="${ROOM:-default}"
 
 echo "🔐 Sending a message that will trigger a permission prompt"
@@ -27,7 +27,7 @@ curl -s -X POST "$BASE_URL/webhook?room=$ROOM" \
 
 echo ""
 echo "✅ Message sent"
-echo "   → เปิด http://localhost:8787/chat?room=$ROOM"
+echo "   → เปิด http://localhost:8788/chat?room=$ROOM"
 echo "   → รอ permission request popup ใน browser"
 echo "   → กด Allow เพื่ออนุญาตให้ Claude รัน command"
 echo ""

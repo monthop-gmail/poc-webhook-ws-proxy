@@ -29,9 +29,9 @@ case "$ACTION" in
 
     tmux new-session -d -s "$SESSION" -x 220 -y 50 \
       "cd '$PROXY_DIR' && claude \
+        --mcp-config .mcp.json \
         --dangerously-load-development-channels server:poc-ws-channel \
-        --dangerously-skip-permissions \
-        2>&1 | tee /tmp/claude-agent.log"
+        --dangerously-skip-permissions"
 
     sleep 1
 

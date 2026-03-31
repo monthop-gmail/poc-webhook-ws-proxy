@@ -31,7 +31,8 @@ npm install
 
 ```bash
 npm run dev
-# Worker พร้อมที่ http://localhost:8787
+# Worker พร้อมที่ http://localhost:8788
+# หมายเหตุ: ถ้า port 8787 ถูกใช้งานอยู่ (เช่น fakechat MCP) ให้เปลี่ยน port ใน wrangler.toml
 ```
 
 ### 3. ทดสอบ webhook (ไม่ต้องใช้ Claude)
@@ -42,12 +43,12 @@ pip install websockets
 python client/client.py
 
 # Terminal 3 — ส่ง webhook
-curl -X POST http://localhost:8787/webhook \
+curl -X POST http://localhost:8788/webhook \
   -H "Content-Type: application/json" \
   -d '{"event": "test", "message": "hello!"}'
 ```
 
-เปิด dashboard: http://localhost:8787/dashboard
+เปิด dashboard: http://localhost:8788/dashboard
 
 ---
 
@@ -80,8 +81,8 @@ cp .mcp.json.example .mcp.json
       "command": "bun",
       "args": ["./channel/channel.ts"],
       "env": {
-        "PROXY_WS_URL":      "ws://localhost:8787/ws",
-        "PROXY_WEBHOOK_URL": "http://localhost:8787/webhook",
+        "PROXY_WS_URL":      "ws://localhost:8788/ws",
+        "PROXY_WEBHOOK_URL": "http://localhost:8788/webhook",
         "PROXY_ROOM":        "default"
       }
     }
@@ -92,13 +93,13 @@ cp .mcp.json.example .mcp.json
 ### 3. Start Claude Code with channel
 
 ```bash
-claude --dangerously-load-development-channels server:poc-ws-channel
+claude --mcp-config .mcp.json --dangerously-load-development-channels server:poc-ws-channel
 ```
 
 ### 4. เปิด Chat UI
 
 ```
-http://localhost:8787/chat
+http://localhost:8788/chat
 ```
 
 พิมพ์ข้อความ → Claude ตอบกลับใน browser ✨

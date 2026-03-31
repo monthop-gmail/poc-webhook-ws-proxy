@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "poc-ws-channel": {
+      "command": "bun",
+      "args": ["./channel/channel.ts"],
+      "env": {
+        "PROXY_WS_URL":      "wss://cf-webhook-ws-proxy.monthop-gmail.workers.dev/ws",
+        "PROXY_WEBHOOK_URL": "https://cf-webhook-ws-proxy.monthop-gmail.workers.dev/webhook",
+        "PROXY_ROOM":        "default"
+      }
+    }
+  }
+}
